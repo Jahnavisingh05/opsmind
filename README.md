@@ -129,3 +129,7 @@ docker compose exec postgres psql -U opsmind -d opsmind
 docker compose logs -f payment-service
 ```
 <img width="944" height="470" alt="image" src="https://github.com/user-attachments/assets/098a0ce8-ee24-43ba-baf6-269cf414d883" />
+<img width="710" height="469" alt="image" src="https://github.com/user-attachments/assets/e8c34634-89fc-44f9-a921-7e29462a9535" />
+<img width="713" height="470" alt="image" src="https://github.com/user-attachments/assets/43b2085c-ac6a-4ae3-90a6-acc14e2aba88" />
+<img width="740" height="467" alt="image" src="https://github.com/user-attachments/assets/9d9f220e-9f34-4341-bee0-08ebbc983246" />
+
