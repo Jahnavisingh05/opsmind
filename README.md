@@ -128,3 +128,4 @@ docker compose exec postgres psql -U opsmind -d opsmind
 # Tail one service's logs
 docker compose logs -f payment-service
 ```
+<img width="944" height="470" alt="image" src="https://github.com/user-attachments/assets/098a0ce8-ee24-43ba-baf6-269cf414d883" />
