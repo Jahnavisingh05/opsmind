@@ -1,0 +1,140 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: opsmind
+      POSTGRES_PASSWORD: opsmind
+      POSTGRES_DB: opsmind
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opsmind"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ingestion-service:
+    build:
+      context: ./services/ingestion-service
+    environment:
+      DATABASE_URL: postgresql://opsmind:opsmind@postgres:5432/opsmind
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    environment:
+      SERVICE_NAME: user-service
+      INGESTION_URL: http://ingestion-service:8000
+    depends_on:
+      - ingestion-service
+    ports:
+      - "8002:8000"
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    environment:
+      SERVICE_NAME: payment-service
+      INGESTION_URL: http://ingestion-service:8000
+    depends_on:
+      - ingestion-service
+    ports:
+      - "8003:8000"
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    environment:
+      SERVICE_NAME: notification-service
+      INGESTION_URL: http://ingestion-service:8000
+    depends_on:
+      - ingestion-service
+    ports:
+      - "8004:8000"
+
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    environment:
+      SERVICE_NAME: order-service
+      INGESTION_URL: http://ingestion-service:8000
+      USER_SVC_URL: http://user-service:8000
+      PAYMENT_SVC_URL: http://payment-service:8000
+      NOTIF_SVC_URL: http://notification-service:8000
+    depends_on:
+      - user-service
+      - payment-service
+      - notification-service
+    ports:
+      - "8005:8000"
+
+  analysis-engine:
+    build:
+      context: ./services/analysis-engine
+    environment:
+      DATABASE_URL: postgresql://opsmind:opsmind@postgres:5432/opsmind
+      GENAI_URL: http://genai-service:8000
+      CYCLE_SECONDS: "10"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      genai-service:
+        condition: service_started
+    ports:
+      - "8006:8000"
+
+  genai-service:
+    build:
+      context: ./services/genai-service
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GENAI_MODEL: ${GENAI_MODEL:-claude-sonnet-4-5}
+    ports:
+      - "8007:8000"
+
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+    environment:
+      DATABASE_URL: postgresql://opsmind:opsmind@postgres:5432/opsmind
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8088:8000"
+
+  dashboard:
+    build:
+      context: ./dashboard
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:80"
+
+  traffic-generator:
+    build:
+      context: ./traffic-generator
+    environment:
+      ORDER_SVC_URL: http://order-service:8000
+      PAYMENT_SVC_URL: http://payment-service:8000
+      NORMAL_DURATION_SEC: "60"
+      INCIDENT_DURATION_SEC: "90"
+    depends_on:
+      - order-service
+
+volumes:
+  pgdata:
