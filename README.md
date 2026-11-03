@@ -33,23 +33,23 @@ OpsMind is a self-contained, containerized platform that **generates its own mic
 
 ```mermaid
 flowchart LR
-    TG[Traffic Generator<br/>load + fault injection] --> ORD[order-service]
-    ORD --> USR[user-service]
-    ORD --> PAY[payment-service]
-    ORD --> NOT[notification-service]
+    TG["Traffic Generator (load + fault injection)"] --> ORD["order-service"]
+    ORD --> USR["user-service"]
+    ORD --> PAY["payment-service"]
+    ORD --> NOT["notification-service"]
 
-    ORD -. logs/metrics .-> ING[ingestion-service]
-    USR -. logs/metrics .-> ING
-    PAY -. logs/metrics .-> ING
-    NOT -. logs/metrics .-> ING
+    ORD -.->|"logs and metrics"| ING["ingestion-service"]
+    USR -.->|"logs and metrics"| ING
+    PAY -.->|"logs and metrics"| ING
+    NOT -.->|"logs and metrics"| ING
 
-    ING --> DB[(PostgreSQL)]
-    DB --> AE[analysis-engine<br/>Isolation Forest + correlation + scoring]
-    AE --> GEN[genai-service<br/>incident summary]
+    ING --> DB[("PostgreSQL")]
+    DB --> AE["analysis-engine (Isolation Forest, correlation, scoring)"]
+    AE --> GEN["genai-service (incident summary)"]
     GEN --> AE
     AE --> DB
-    DB --> GW[api-gateway]
-    GW --> DASH[Dashboard]
+    DB --> GW["api-gateway"]
+    GW --> DASH["Dashboard"]
 ```
 
 ### The three levels
